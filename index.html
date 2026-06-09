@@ -896,27 +896,40 @@ try {
         targets.push(candidates[Math.floor(Math.random() * candidates.length)]);
       }
 
-      // Build particles: each starts scattered randomly around the canvas
-      const particles = targets.map((t) => ({
-        tx: t.x, ty: t.y,
-        x:  Math.random() * W,
-        y:  Math.random() * H * 1.4 - H * 0.2,
-        ox: 0, oy: 0,
-        phase: Math.random() * Math.PI * 2,
-        speed: 0.3 + Math.random() * 0.7,
-        color: particleColor(Math.random()),
-        radius: 1.8 + Math.random() * 1.4,
-      }));
+      // Build particles: each starts from outside the canvas bounds
+      function outsidePos() {
+        const angle = Math.random() * Math.PI * 2;
+        const dist  = Math.max(W, H) * (1.2 + Math.random() * 1.2);
+        return {
+          x: W / 2 + Math.cos(angle) * dist,
+          y: H / 2 + Math.sin(angle) * dist,
+        };
+      }
+
+      const particles = targets.map((t) => {
+        const pos = outsidePos();
+        return {
+          tx: t.x, ty: t.y,
+          x: pos.x, y: pos.y,
+          ox: 0, oy: 0,
+          phase: Math.random() * Math.PI * 2,
+          speed: 0.3 + Math.random() * 0.7,
+          color: particleColor(Math.random()),
+          radius: 1.8 + Math.random() * 1.4,
+        };
+      });
 
       const LOOP_INTERVAL = 10000; // ms between loop restarts
 
       let startTime = null;
 
-      // Scatter each particle back to a new random position for re-entry
+      // Scatter particles back outside canvas bounds for loop restart
       function scatter() {
         for (const p of particles) {
-          p.x = Math.random() * W;
-          p.y = Math.random() * H * 1.4 - H * 0.2;
+          const angle = Math.random() * Math.PI * 2;
+          const dist  = Math.max(W, H) * (1.2 + Math.random() * 1.2);
+          p.x = W / 2 + Math.cos(angle) * dist;
+          p.y = H / 2 + Math.sin(angle) * dist;
         }
         startTime = null;
       }
