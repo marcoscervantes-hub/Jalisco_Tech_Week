@@ -124,11 +124,13 @@
       align-items: center;
       position: relative;
       z-index: 2;
+      overflow: hidden;   /* clip the large particle canvas */
     }
 
     .minerva-wrap {
       position: relative;
       width: clamp(480px, 56vw, 960px);
+      overflow: visible;   /* canvas bleeds out; hero-right clips */
       animation: levitate 3s ease-in-out infinite alternate;
     }
 
@@ -145,9 +147,12 @@
     }
 
     #minerva-canvas {
-      width: 100%;
-      height: auto;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
       display: block;
+      pointer-events: none;
       filter: drop-shadow(0 0 32px rgba(7,245,235,0.45)) drop-shadow(0 0 8px rgba(7,245,235,0.25));
     }
 
@@ -861,8 +866,23 @@ try {
       const scale = Math.min(MAX_W / nW, MAX_H / nH, 1);
       const W = Math.round(nW * scale);
       const H = Math.round(nH * scale);
-      canvas.width  = W;
-      canvas.height = H;
+
+      // ── Large canvas: 3× viewport so particles start way off-screen in all directions
+      const VW = window.innerWidth;
+      const VH = window.innerHeight;
+      const CW = VW * 3;
+      const CH = VH * 3;
+      canvas.width  = CW;
+      canvas.height = CH;
+      canvas.style.width  = CW + 'px';
+      canvas.style.height = CH + 'px';
+      // Give minerva-wrap an explicit height so its glow ::before stays anchored
+      const wrap = canvas.closest('.minerva-wrap');
+      if (wrap) wrap.style.minHeight = Math.round(H * (wrap.getBoundingClientRect().width / W)) + 'px';
+
+      // Offset so the Minerva silhouette is centred in the large canvas
+      const OX = Math.round((CW - W) / 2);
+      const OY = Math.round((CH - H) / 2);
 
       // Sample pixel positions from the scaled image
       const off = document.createElement('canvas');
@@ -879,7 +899,8 @@ try {
         for (let x = 0; x < W; x++) {
           const i = (y * W + x) * 4;
           if (data[i + 3] > 40) {
-            candidates.push({ x, y });
+            // shift targets into large-canvas space
+            candidates.push({ x: x + OX, y: y + OY });
           }
         }
       }
@@ -896,13 +917,16 @@ try {
         targets.push(candidates[Math.floor(Math.random() * candidates.length)]);
       }
 
-      // Build particles: each starts from outside the canvas bounds
+      // Random start pos: viewport-relative factor -2 to 3 (per spec),
+      // centred on the Minerva centre so particles converge from all directions
+      const cx = OX + W / 2;   // Minerva centre in large-canvas coords
+      const cy = OY + H / 2;
       function outsidePos() {
-        const angle = Math.random() * Math.PI * 2;
-        const dist  = Math.max(W, H) * (1.2 + Math.random() * 1.2);
+        const fx = Math.random() * 5 - 2;   // −2 … +3  ×  viewport width
+        const fy = Math.random() * 5 - 2;
         return {
-          x: W / 2 + Math.cos(angle) * dist,
-          y: H / 2 + Math.sin(angle) * dist,
+          x: cx + fx * VW,
+          y: cy + fy * VH,
         };
       }
 
@@ -923,13 +947,12 @@ try {
 
       let startTime = null;
 
-      // Scatter particles back outside canvas bounds for loop restart
+      // Scatter: send every particle back to a fresh random outside-viewport position
       function scatter() {
         for (const p of particles) {
-          const angle = Math.random() * Math.PI * 2;
-          const dist  = Math.max(W, H) * (1.2 + Math.random() * 1.2);
-          p.x = W / 2 + Math.cos(angle) * dist;
-          p.y = H / 2 + Math.sin(angle) * dist;
+          const pos = outsidePos();
+          p.x = pos.x;
+          p.y = pos.y;
         }
         startTime = null;
       }
@@ -949,7 +972,7 @@ try {
         const eased = easeOutExpo(progress);
         const now = ts * 0.001;
 
-        ctx.clearRect(0, 0, W, H);
+        ctx.clearRect(0, 0, CW, CH);
 
         for (const p of particles) {
           let px, py;
