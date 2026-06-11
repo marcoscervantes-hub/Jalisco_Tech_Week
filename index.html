@@ -124,13 +124,12 @@
       align-items: center;
       position: relative;
       z-index: 2;
-      overflow: hidden;   /* clip the large particle canvas */
+
     }
 
     .minerva-wrap {
       position: relative;
       width: clamp(480px, 56vw, 960px);
-      overflow: visible;   /* canvas bleeds out; hero-right clips */
       animation: levitate 3s ease-in-out infinite alternate;
     }
 
@@ -148,9 +147,9 @@
 
     #minerva-canvas {
       position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
+      top: 0;
+      left: 0;
+      z-index: 1;
       display: block;
       pointer-events: none;
       filter: drop-shadow(0 0 32px rgba(7,245,235,0.45)) drop-shadow(0 0 8px rgba(7,245,235,0.25));
@@ -591,6 +590,7 @@
 ═══════════════════════════════ -->
 <section id="hero">
   <div class="dot-grid"></div>
+  <canvas id="minerva-canvas" aria-label="Minerva — símbolo de Guadalajara"></canvas>
 
   <nav class="hero-nav">
     <span class="nav-isotipo" aria-hidden="true" style="display:inline-flex;align-items:center;">
@@ -614,9 +614,7 @@
     </div>
 
     <div class="hero-right">
-      <div class="minerva-wrap">
-        <canvas id="minerva-canvas" aria-label="Minerva — símbolo de Guadalajara"></canvas>
-      </div>
+      <div class="minerva-wrap"></div>
     </div>
   </div>
 
@@ -867,22 +865,31 @@ try {
       const W = Math.round(nW * scale);
       const H = Math.round(nH * scale);
 
-      // ── Large canvas: 3× viewport so particles start way off-screen in all directions
+      // ── Canvas = exact viewport (100 vw x 100 vh). #hero has overflow:hidden so it clips cleanly.
       const VW = window.innerWidth;
       const VH = window.innerHeight;
-      const CW = VW * 3;
-      const CH = VH * 3;
-      canvas.width  = CW;
-      canvas.height = CH;
-      canvas.style.width  = CW + 'px';
-      canvas.style.height = CH + 'px';
-      // Give minerva-wrap an explicit height so its glow ::before stays anchored
-      const wrap = canvas.closest('.minerva-wrap');
-      if (wrap) wrap.style.minHeight = Math.round(H * (wrap.getBoundingClientRect().width / W)) + 'px';
+      canvas.width  = VW;
+      canvas.height = VH;
+      canvas.style.width  = VW + 'px';
+      canvas.style.height = VH + 'px';
 
-      // Offset so the Minerva silhouette is centred in the large canvas
-      const OX = Math.round((CW - W) / 2);
-      const OY = Math.round((CH - H) / 2);
+      // ── Measure where Minerva should appear (right column, hero-right centre)
+      const heroEl  = document.getElementById('hero');
+      const wrapEl  = document.querySelector('.minerva-wrap');
+      const hrEl    = document.querySelector('.hero-right');
+      // Give minerva-wrap an explicit height so glow ::before is anchored properly
+      const displayH = Math.round(H / W * wrapEl.offsetWidth);
+      wrapEl.style.height = displayH + 'px';
+      // Recompute rects after setting height
+      const heroR = heroEl.getBoundingClientRect();
+      const wrapR = wrapEl.getBoundingClientRect();
+      const hrR   = hrEl.getBoundingClientRect();
+      // Minerva centre in hero-relative (= canvas) coords
+      const cx = wrapR.left  + wrapR.width  / 2 - heroR.left;
+      const cy = hrR.top     + hrR.height   / 2 - heroR.top;
+      // Offset to centre Minerva image at (cx, cy)
+      const OX = Math.round(cx - W / 2);
+      const OY = Math.round(cy - H / 2);
 
       // Sample pixel positions from the scaled image
       const off = document.createElement('canvas');
@@ -917,12 +924,11 @@ try {
         targets.push(candidates[Math.floor(Math.random() * candidates.length)]);
       }
 
-      // Random start pos: viewport-relative factor -2 to 3 (per spec),
-      // centred on the Minerva centre so particles converge from all directions
-      const cx = OX + W / 2;   // Minerva centre in large-canvas coords
-      const cy = OY + H / 2;
+      // Random start pos: viewport factor -2..+3 centred on Minerva
+      // cx, cy come from DOM measurement above. Canvas IS the viewport:
+      // particles outside [0..VW x 0..VH] are fully off-screen until they fly in.
       function outsidePos() {
-        const fx = Math.random() * 5 - 2;   // −2 … +3  ×  viewport width
+        const fx = Math.random() * 5 - 2;   // -2 to +3  x viewport width
         const fy = Math.random() * 5 - 2;
         return {
           x: cx + fx * VW,
@@ -972,7 +978,7 @@ try {
         const eased = easeOutExpo(progress);
         const now = ts * 0.001;
 
-        ctx.clearRect(0, 0, CW, CH);
+        ctx.clearRect(0, 0, VW, VH);
 
         for (const p of particles) {
           let px, py;
