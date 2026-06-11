@@ -115,6 +115,50 @@
       letter-spacing: 0.06em;
     }
 
+    /* ── Countdown ── */
+    .countdown {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 2rem;
+    }
+    .cd-block {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: rgba(7,245,235,0.06);
+      border: 1px solid rgba(7,245,235,0.22);
+      border-radius: 8px;
+      padding: 0.6rem 1rem;
+      min-width: 72px;
+    }
+    .cd-num {
+      font-family: var(--font);
+      font-size: clamp(1.6rem, 3.2vw, 2.4rem);
+      font-weight: 700;
+      line-height: 1;
+      color: var(--cian);
+      letter-spacing: -0.02em;
+      font-variant-numeric: tabular-nums;
+    }
+    .cd-label {
+      font-family: var(--font);
+      font-size: 0.55rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.45);
+      margin-top: 0.3rem;
+    }
+    .cd-sep {
+      font-family: var(--font);
+      font-size: clamp(1.4rem, 2.8vw, 2rem);
+      font-weight: 700;
+      color: rgba(7,245,235,0.4);
+      line-height: 1;
+      padding-bottom: 1.2rem;
+      user-select: none;
+    }
+
     .hero-right {
       display: flex;
       justify-content: center;
@@ -602,6 +646,29 @@
       </h1>
       <p class="hero-date">NOV 2–7, 2026</p>
       <p class="hero-sub">100+ eventos &nbsp;·&nbsp; Múltiples sedes &nbsp;·&nbsp; Guadalajara, Jalisco</p>
+
+      <!-- Countdown timer -->
+      <div class="countdown" id="countdown" aria-label="Cuenta regresiva al evento">
+        <div class="cd-block">
+          <span class="cd-num" id="cd-days">--</span>
+          <span class="cd-label">días</span>
+        </div>
+        <div class="cd-sep">:</div>
+        <div class="cd-block">
+          <span class="cd-num" id="cd-hours">--</span>
+          <span class="cd-label">horas</span>
+        </div>
+        <div class="cd-sep">:</div>
+        <div class="cd-block">
+          <span class="cd-num" id="cd-mins">--</span>
+          <span class="cd-label">min</span>
+        </div>
+        <div class="cd-sep">:</div>
+        <div class="cd-block">
+          <span class="cd-num" id="cd-secs">--</span>
+          <span class="cd-label">seg</span>
+        </div>
+      </div>
     </div>
 
     <div class="hero-right">
@@ -1068,6 +1135,41 @@ try {
 
     if (isotipoContainer) logoObserver.observe(isotipoContainer);
   } catch(e) { console.warn('Logo observer failed:', e); }
+
+  /* ── Countdown timer — NOV 2, 2026 00:00:00 CST (UTC-6) Guadalajara ── */
+  (function () {
+    // Target: Nov 2, 2026 at midnight Guadalajara time (CST = UTC-6)
+    const TARGET = new Date('2026-11-02T06:00:00Z'); // 00:00 CST = 06:00 UTC
+
+    const elD = document.getElementById('cd-days');
+    const elH = document.getElementById('cd-hours');
+    const elM = document.getElementById('cd-mins');
+    const elS = document.getElementById('cd-secs');
+
+    function pad(n) { return String(n).padStart(2, '0'); }
+
+    function tick() {
+      const diff = TARGET - Date.now();
+      if (diff <= 0) {
+        // Event started
+        elD.textContent = elH.textContent = elM.textContent = elS.textContent = '00';
+        return;
+      }
+      const totalSecs = Math.floor(diff / 1000);
+      const days  = Math.floor(totalSecs / 86400);
+      const hours = Math.floor((totalSecs % 86400) / 3600);
+      const mins  = Math.floor((totalSecs % 3600)  / 60);
+      const secs  = totalSecs % 60;
+
+      elD.textContent = pad(days);
+      elH.textContent = pad(hours);
+      elM.textContent = pad(mins);
+      elS.textContent = pad(secs);
+    }
+
+    tick();
+    setInterval(tick, 1000);
+  })();
 </script>
 </body>
 </html>
