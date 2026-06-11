@@ -1178,12 +1178,16 @@ try {
     resize();
     window.addEventListener('resize', resize);
 
-    /* ── Define 4 sine-wave lanes centred on the section ── */
+    /* ── Define 8 sine-wave lanes centred on the section ── */
     const LANES = [
       { ampY: 18, freq: 0.0055, speed: 0.28, yOff: -60, color: '#07F5EB', alpha: 0.55 },
       { ampY: 30, freq: 0.0040, speed: 0.20, yOff: -18, color: '#5838E4', alpha: 0.65 },
       { ampY: 25, freq: 0.0070, speed: 0.35, yOff:  22, color: '#07F5EB', alpha: 0.45 },
       { ampY: 15, freq: 0.0048, speed: 0.22, yOff:  58, color: '#5838E4', alpha: 0.40 },
+      { ampY: 22, freq: 0.0062, speed: 0.31, yOff: -90, color: '#5838E4', alpha: 0.35 },
+      { ampY: 12, freq: 0.0083, speed: 0.42, yOff: -42, color: '#07F5EB', alpha: 0.30 },
+      { ampY: 28, freq: 0.0035, speed: 0.18, yOff:  44, color: '#07F5EB', alpha: 0.50 },
+      { ampY: 20, freq: 0.0058, speed: 0.26, yOff:  85, color: '#5838E4', alpha: 0.38 },
     ];
 
     /* ── Spawn particles per lane ── */
