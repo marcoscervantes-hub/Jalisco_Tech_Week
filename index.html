@@ -241,6 +241,8 @@
        2. LOGO ANIMATION SECTION
     ══════════════════════════════ */
     #logo-section {
+      position: relative;
+      overflow: hidden;
       padding: 7rem 2.5rem;
       display: flex;
       flex-direction: column;
@@ -248,6 +250,17 @@
       gap: 3rem;
       background: linear-gradient(180deg, #0b1d26 0%, var(--bg) 100%);
     }
+    /* Wave particle canvases */
+    .wave-canvas {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+    }
+    #wave-back  { z-index: 0; }
+    #wave-front { z-index: 3; }
+    .isotipo-container { position: relative; z-index: 1; }
+    .logo-label        { position: relative; z-index: 4; }
 
     /* SVG Isotipo */
     .isotipo-svg {
@@ -691,6 +704,9 @@
      2. LOGO ANIMATION
 ═══════════════════════════════ -->
 <section id="logo-section">
+  <!-- wave layer BEHIND isotipo -->
+  <canvas id="wave-back"  class="wave-canvas"></canvas>
+
   <div class="isotipo-container" id="isotipo-container">
     <svg class="isotipo-svg" viewBox="0 0 718.81 500" xmlns="http://www.w3.org/2000/svg" aria-label="Jalisco Tech Week isotipo">
       <g class="iso-layer iso-glitch-p" id="ring-p1">
@@ -704,6 +720,9 @@
       </g>
     </svg>
   </div>
+
+  <!-- wave layer IN FRONT of isotipo -->
+  <canvas id="wave-front" class="wave-canvas"></canvas>
 
   <div class="logo-label reveal" id="logo-label">
     JALISCO <span class="isotipo-inline">(())</span> TECHWEEK
@@ -1136,6 +1155,96 @@ try {
     if (isotipoContainer) logoObserver.observe(isotipoContainer);
   } catch(e) { console.warn('Logo observer failed:', e); }
 
+
+  /* ── Wave particle stream — logo section ── */
+  (function () {
+    const back  = document.getElementById('wave-back');
+    const front = document.getElementById('wave-front');
+    const sec   = document.getElementById('logo-section');
+    if (!back || !front || !sec) return;
+
+    const bctx = back.getContext('2d');
+    const fctx  = front.getContext('2d');
+
+    let W, H, cx, cy;
+    function resize() {
+      W = sec.offsetWidth;
+      H = sec.offsetHeight;
+      back.width  = front.width  = W;
+      back.height = front.height = H;
+      cx = W / 2;
+      cy = H / 2;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    /* ── Define 4 sine-wave lanes centred on the section ── */
+    const LANES = [
+      { ampY: 18, freq: 0.0055, speed: 0.28, yOff: -60, color: '#07F5EB', alpha: 0.55 },
+      { ampY: 30, freq: 0.0040, speed: 0.20, yOff: -18, color: '#5838E4', alpha: 0.65 },
+      { ampY: 25, freq: 0.0070, speed: 0.35, yOff:  22, color: '#07F5EB', alpha: 0.45 },
+      { ampY: 15, freq: 0.0048, speed: 0.22, yOff:  58, color: '#5838E4', alpha: 0.40 },
+    ];
+
+    /* ── Spawn particles per lane ── */
+    const TOTAL = 320;
+    const PER_LANE = Math.floor(TOTAL / LANES.length);
+    const particles = [];
+    LANES.forEach((lane, li) => {
+      for (let i = 0; i < PER_LANE; i++) {
+        particles.push({
+          lane: li,
+          x: Math.random() * (W + 400) - 200,
+          radius: 1.0 + Math.random() * 2.0,
+          alpha:  lane.alpha * (0.5 + Math.random() * 0.5),
+        });
+      }
+    });
+
+    let t = 0;
+    let running = false;
+
+    /* Only animate while the section is visible */
+    const io = new IntersectionObserver(entries => {
+      running = entries[0].isIntersecting;
+      if (running) requestAnimationFrame(frame);
+    }, { threshold: 0.05 });
+    io.observe(sec);
+
+    function frame() {
+      if (!running) return;
+
+      bctx.clearRect(0, 0, W, H);
+      fctx.clearRect(0, 0, W, H);
+
+      for (const p of particles) {
+        const lane = LANES[p.lane];
+
+        /* advance horizontally */
+        p.x += lane.speed;
+        if (p.x > W + 200) p.x = -200;
+
+        /* sine-wave y */
+        const sinVal = Math.sin(p.x * lane.freq + t);
+        const y = cy + lane.yOff + sinVal * lane.ampY;
+
+        /* front = positive crest; back = negative trough */
+        const ctx = sinVal > 0 ? fctx : bctx;
+        ctx.beginPath();
+        ctx.arc(p.x, y, p.radius, 0, Math.PI * 2);
+        ctx.fillStyle = lane.color;
+        ctx.globalAlpha = p.alpha * (sinVal > 0 ? 1.0 : 0.55);
+        ctx.fill();
+      }
+      ctx_reset(bctx);
+      ctx_reset(fctx);
+
+      t += 0.012;
+      requestAnimationFrame(frame);
+    }
+
+    function ctx_reset(c) { c.globalAlpha = 1; }
+  })();
   /* ── Countdown timer — NOV 2, 2026 00:00:00 CST (UTC-6) Guadalajara ── */
   (function () {
     // Target: Nov 2, 2026 at midnight Guadalajara time (CST = UTC-6)
