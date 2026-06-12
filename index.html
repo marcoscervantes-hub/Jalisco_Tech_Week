@@ -486,6 +486,18 @@
       margin: 0 auto;
     }
 
+    /* Aliado logos — preserve native aspect ratio, never stretch */
+    .ally-logo {
+      max-width: 78%;
+      max-height: 62px;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+      opacity: 0.92;
+      transition: opacity 0.2s;
+    }
+    .sponsor-slot:hover .ally-logo { opacity: 1; }
+
     /* ══════════════════════════════
        6. FOOTER
     ══════════════════════════════ */
@@ -769,10 +781,10 @@
 
   <p class="section-label reveal" style="transition-delay:0.2s; margin-top:1rem;">ALIADOS</p>
   <div class="ally-grid reveal" style="transition-delay:0.3s">
-    <div class="sponsor-slot">ALIADO</div>
-    <div class="sponsor-slot">ALIADO</div>
-    <div class="sponsor-slot">ALIADO</div>
-    <div class="sponsor-slot">ALIADO</div>
+    <div class="sponsor-slot"><img class="ally-logo" src="OrganizadoreS/VD-Logo-Blanco.png" alt="VD" loading="lazy"></div>
+    <div class="sponsor-slot"><img class="ally-logo" src="OrganizadoreS/Logo-Estandar-Blanco.svg" alt="Aliado" loading="lazy"></div>
+    <div class="sponsor-slot"><img class="ally-logo" src="OrganizadoreS/Lokki_Logo-03%20(2).png" alt="Lokki" loading="lazy"></div>
+    <div class="sponsor-slot"><img class="ally-logo" src="OrganizadoreS/MariachisValley.png" alt="Mariachis Valley" loading="lazy"></div>
   </div>
 </section>
 
