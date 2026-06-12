@@ -193,7 +193,8 @@
       z-index: 1;
       display: block;
       pointer-events: none;
-      filter: drop-shadow(0 0 32px rgba(7,245,235,0.45)) drop-shadow(0 0 8px rgba(7,245,235,0.25));
+      /* Glow now comes from additive 'lighter' compositing in JS (GPU-cheap).
+         A per-frame canvas drop-shadow filter killed performance. */
     }
 
     @keyframes levitate {
@@ -1030,6 +1031,26 @@ try {
 
       let startTime = null;
 
+      // Additive blending: overlapping cyan dots bloom into a glow where the
+      // figure is dense — replaces the costly per-frame drop-shadow filter.
+      ctx.globalCompositeOperation = 'lighter';
+
+      // Pause the loop while the hero is scrolled out of view (frees the GPU).
+      let running = true;
+      let rafId = null;
+      const heroIO = new IntersectionObserver((entries) => {
+        const nowVisible = entries[0].isIntersecting;
+        if (nowVisible && !running) {
+          running = true;
+          startTime = null;            // resume cleanly without a time jump
+          rafId = requestAnimationFrame(draw);
+        } else if (!nowVisible) {
+          running = false;
+          if (rafId) cancelAnimationFrame(rafId);
+        }
+      }, { threshold: 0 });
+      heroIO.observe(document.getElementById('hero'));
+
       // Scatter: send every particle back to a fresh random outside-viewport position
       function scatter() {
         for (const p of particles) {
@@ -1041,13 +1062,14 @@ try {
       }
 
       function draw(ts) {
+        if (!running) return;
         if (!startTime) startTime = ts;
         const elapsed = ts - startTime;
 
         // Once fully assembled, hold breathing for remainder of LOOP_INTERVAL then restart
         if (elapsed >= LOOP_INTERVAL) {
           scatter();
-          requestAnimationFrame(draw);
+          rafId = requestAnimationFrame(draw);
           return;
         }
 
@@ -1077,10 +1099,10 @@ try {
           ctx.fill();
         }
 
-        requestAnimationFrame(draw);
+        rafId = requestAnimationFrame(draw);
       }
 
-      requestAnimationFrame(draw);
+      rafId = requestAnimationFrame(draw);
     }
 
     // Embedded as data URL — works on file:// without CORS issues
