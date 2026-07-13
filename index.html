@@ -407,6 +407,59 @@
     }
 
     /* ══════════════════════════════
+       3.5 TECH AGAVE AWARDS
+    ══════════════════════════════ */
+    #awards-section {
+      padding: 6rem 2.5rem;
+      background: var(--bg);
+    }
+    .awards-inner {
+      max-width: 1150px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      align-items: center;
+      gap: clamp(2rem, 5vw, 5rem);
+    }
+    .awards-photo {
+      perspective: 1200px;
+    }
+    .photo-slider {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      border-radius: 14px;
+      overflow: hidden;
+      transform: rotate(-3deg);
+      box-shadow: 0 30px 70px rgba(0,0,0,0.55), 0 0 0 1px rgba(7,245,235,0.08);
+    }
+    .photo-slider .slide {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0;
+      transition: opacity 1.1s ease;
+    }
+    .photo-slider .slide.is-active {
+      opacity: 1;
+    }
+    .awards-title {
+      font-size: clamp(2rem, 4.5vw, 3.4rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--white);
+      line-height: 1.05;
+      margin-bottom: 1.4rem;
+    }
+    .awards-desc {
+      font-size: clamp(0.95rem, 1.6vw, 1.15rem);
+      line-height: 1.65;
+      color: rgba(255,255,255,0.68);
+    }
+
+    /* ══════════════════════════════
        4. CTA / REGISTRO
     ══════════════════════════════ */
     #cta-section {
@@ -570,6 +623,12 @@
       }
       .hero-right { order: 1; }   /* canvas after headline */
       .hero-left  { order: 0; }
+
+      /* Awards: stack photo above text */
+      #awards-section { padding: 4rem 1.5rem; }
+      .awards-inner { grid-template-columns: 1fr; gap: 2.5rem; }
+      .photo-slider { transform: rotate(-2deg); }
+      .awards-text { text-align: center; }
 
       .minerva-wrap {
         width: 70vw;
@@ -799,6 +858,27 @@
     <div class="num-item">
       <div class="num-value"><span class="num-plus">+</span><span class="num-count" data-target="3000">0</span></div>
       <div class="num-label">Asistentes</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════
+     3.5 TECH AGAVE AWARDS
+═══════════════════════════════ -->
+<section id="awards-section">
+  <div class="awards-inner">
+    <div class="awards-photo reveal">
+      <div class="photo-slider" id="photo-slider">
+        <img class="slide is-active" src="Fotos/354A6796.jpg" alt="Tech Agave Awards" loading="lazy">
+        <img class="slide" src="Fotos/354A6800.jpg" alt="Tech Agave Awards" loading="lazy">
+        <img class="slide" src="Fotos/20251119_173653.jpg" alt="Tech Agave Awards" loading="lazy">
+        <img class="slide" src="Fotos/20251119_183432%20(1).jpg" alt="Tech Agave Awards" loading="lazy">
+        <img class="slide" src="Fotos/20251119_102522.jpg" alt="Tech Agave Awards" loading="lazy">
+      </div>
+    </div>
+    <div class="awards-text reveal" style="transition-delay:0.15s">
+      <h2 class="awards-title">Los Tech Agave Awards</h2>
+      <p class="awards-desc">El máximo reconocimiento independiente de México a la excelencia, innovación y liderazgo en todo el ecosistema tecnológico. Un escenario nacional que distingue a las empresas, productos y personas que están transformando el software, la ciberseguridad, la IA, la nube y la experiencia digital, desde Guadalajara hacia el resto de Latinoamérica.</p>
     </div>
   </div>
 </section>
@@ -1397,6 +1477,26 @@ try {
     }, { threshold: 0.5 });
 
     counters.forEach((c) => io.observe(c));
+  })();
+
+  /* ── Tech Agave Awards: photo slideshow, one every 4s ── */
+  (function () {
+    const slider = document.getElementById('photo-slider');
+    if (!slider) return;
+    const slides = slider.querySelectorAll('.slide');
+    if (slides.length < 2) return;
+
+    let current = 0;
+    const INTERVAL = 4000; // ms
+
+    function next() {
+      const upcoming = (current + 1) % slides.length;
+      slides[current].classList.remove('is-active');
+      slides[upcoming].classList.add('is-active');
+      current = upcoming;
+    }
+
+    setInterval(next, INTERVAL);
   })();
 </script>
 </body>
