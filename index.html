@@ -370,6 +370,42 @@
       box-shadow: 0 0 18px rgba(7,245,235,0.2);
     }
 
+    /* ── Numeralia animada ── */
+    .numeralia {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: clamp(2.5rem, 8vw, 7rem);
+      margin-top: 4.5rem;
+    }
+    .num-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .num-value {
+      font-family: var(--font);
+      font-weight: 700;
+      font-size: clamp(3rem, 9vw, 6rem);
+      line-height: 1;
+      letter-spacing: -0.03em;
+      color: var(--cian);
+      display: flex;
+      align-items: baseline;
+      text-shadow: 0 0 28px rgba(7,245,235,0.35);
+    }
+    .num-plus { font-size: 0.6em; margin-right: 0.05em; }
+    .num-count { font-variant-numeric: tabular-nums; }
+    .num-label {
+      font-family: var(--font);
+      margin-top: 0.9rem;
+      font-size: clamp(0.75rem, 1.6vw, 1rem);
+      font-weight: 700;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.6);
+    }
+
     /* ══════════════════════════════
        4. CTA / REGISTRO
     ══════════════════════════════ */
@@ -753,6 +789,18 @@
     <div class="pill">1 Semana</div>
     <div class="pill">Jalisco, MX</div>
   </div>
+
+  <!-- Numeralia animada -->
+  <div class="numeralia reveal" id="numeralia" style="transition-delay:0.3s">
+    <div class="num-item">
+      <div class="num-value"><span class="num-plus">+</span><span class="num-count" data-target="100">0</span></div>
+      <div class="num-label">Eventos</div>
+    </div>
+    <div class="num-item">
+      <div class="num-value"><span class="num-plus">+</span><span class="num-count" data-target="3000">0</span></div>
+      <div class="num-label">Asistentes</div>
+    </div>
+  </div>
 </section>
 
 <!-- ═══════════════════════════════
@@ -1105,10 +1153,9 @@ try {
             py = p.ty + p.oy;
           }
 
-          ctx.beginPath();
-          ctx.arc(px, py, p.radius, 0, Math.PI * 2);
+          const s = p.radius * 2;               // square side = old diameter
           ctx.fillStyle = p.color;
-          ctx.fill();
+          ctx.fillRect(px - p.radius, py - p.radius, s, s);
         }
 
         rafId = requestAnimationFrame(draw);
@@ -1268,11 +1315,10 @@ try {
 
         /* front = positive crest; back = negative trough */
         const ctx = sinVal > 0 ? fctx : bctx;
-        ctx.beginPath();
-        ctx.arc(p.x, y, p.radius, 0, Math.PI * 2);
         ctx.fillStyle = lane.color;
         ctx.globalAlpha = p.alpha * (sinVal > 0 ? 1.0 : 0.55);
-        ctx.fill();
+        const s = p.radius * 2;               // square side = old diameter
+        ctx.fillRect(p.x - p.radius, y - p.radius, s, s);
       }
       ctx_reset(bctx);
       ctx_reset(fctx);
@@ -1316,6 +1362,41 @@ try {
 
     tick();
     setInterval(tick, 1000);
+  })();
+
+  /* ── Numeralia: count-up animation on scroll into view ── */
+  (function () {
+    const counters = document.querySelectorAll('.num-count');
+    if (!counters.length) return;
+
+    function easeOutQuad(t) { return 1 - (1 - t) * (1 - t); }
+
+    function animate(el) {
+      const target = parseInt(el.dataset.target, 10) || 0;
+      const duration = 1800; // ms
+      let startTs = null;
+
+      function step(ts) {
+        if (!startTs) startTs = ts;
+        const progress = Math.min((ts - startTs) / duration, 1);
+        const value = Math.round(easeOutQuad(progress) * target);
+        el.textContent = value.toLocaleString('es-MX');
+        if (progress < 1) requestAnimationFrame(step);
+        else el.textContent = target.toLocaleString('es-MX');
+      }
+      requestAnimationFrame(step);
+    }
+
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((e) => {
+        if (e.isIntersecting) {
+          animate(e.target);
+          io.unobserve(e.target); // only run once
+        }
+      });
+    }, { threshold: 0.5 });
+
+    counters.forEach((c) => io.observe(c));
   })();
 </script>
 </body>
