@@ -1,0 +1,5 @@
+# Local photo backups (originals kept on disk, not deployed)
+Fotos/originales/
+
+# Local tooling config
+.claude/
